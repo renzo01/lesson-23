@@ -1,9 +1,9 @@
-import firebase from 'firebase/app';
-import 'firebase/firestore';
-import 'firebase/auth';
+import firebase from "firebase/app";
+import "firebase/firestore";
+import "firebase/auth";
 
 const config = {
- apiKey: "AIzaSyAef1XCu-6jv5uFUimK8f0rvYi0cqEAkZA",
+  apiKey: "AIzaSyAef1XCu-6jv5uFUimK8f0rvYi0cqEAkZA",
   authDomain: "crwn-db-bde39.firebaseapp.com",
   databaseURL: "https://crwn-db-bde39.firebaseio.com",
   projectId: "crwn-db-bde39",
@@ -33,18 +33,43 @@ export const createUserProfileDocument = async (userAuth, additionalData) => {
         ...additionalData
       });
     } catch (error) {
-      console.log('error creating user', error.message);
+      console.log("error creating user", error.message);
     }
   }
 
   return userRef;
 };
 
+export const addCollectionAndDocuments = async (collectionKey, objectToAdd) => {
+  const collectionRef = firestore.collection(collectionKey);
+  const batch = firestore.batch();
+  objectToAdd.forEach(obj => {
+    const newDocRef = collectionRef.doc(obj.title);
+    batch.set(newDocRef, obj);
+  });
+  return await batch.commit();
+};
+export const convertCollectionsSnapshotToMap = collectionsSnapshot => {
+  const transformedCollection = collectionsSnapshot.docs.map(doc => {
+    const { title, items } = doc.data();
+    return {
+      routeName: encodeURI(title.toLowerCase()),
+      id: doc.id,
+      title,
+      items
+    };
+  });
+  return transformedCollection.reduce((accumulator,collection) => {
+    accumulator[collection.title.toLowerCase()] = collection;
+    return accumulator;
+  },{})
+};
+
 export const auth = firebase.auth();
 export const firestore = firebase.firestore();
 
 const provider = new firebase.auth.GoogleAuthProvider();
-provider.setCustomParameters({ prompt: 'select_account' });
+provider.setCustomParameters({ prompt: "select_account" });
 export const signInWithGoogle = () => auth.signInWithPopup(provider);
 
 export default firebase;
